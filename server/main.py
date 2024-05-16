@@ -7,7 +7,7 @@ def add(a, b):
 def sub(a, b):
     return a - b
 
-def parse_args(args):
+def parse_args():
     parser = argparse.ArgumentParser(description='RPC Client Starter')
     parser.add_argument(
         '-l', '--listen-ip',
@@ -24,7 +24,8 @@ def parse_args(args):
         required=True
         )
     
-    return parser.parse_args(args)
+    return parser.parse_args()
+    
 
 if __name__ == '__main__':
     server = RPCServer()
