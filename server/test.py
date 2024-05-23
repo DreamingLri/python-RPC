@@ -93,7 +93,6 @@ class RPCServer:
         t = RepeatingTimer(5, server.heartbeat)
         t.start()
 
-        
         ServerSocket = socket(AF_INET, SOCK_STREAM)
         ServerSocket.bind((ip, port))
         ServerSocket.listen(1024)
