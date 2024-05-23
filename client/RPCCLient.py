@@ -28,15 +28,23 @@ class RPCClient:
         self.port = port
 
     def call(self, function, *args):
-        ClientSocket = socket(AF_INET, SOCK_STREAM)
-        ClientSocket.connect((self.host, self.port))
-        data = {
-            'function': function,
-            'args': args
-        }
-        ClientSocket.send(json.dumps(data).encode())
-        result = ClientSocket.recv(1024)
-        return json.loads(result.decode())
+        try:
+            ClientSocket = socket(AF_INET, SOCK_STREAM)
+            ClientSocket.connect((self.host, self.port))
+            ClientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+            ClientSocket.settimeout(5)
+            print("Connected to server at {}:{}".format(self.host, self.port))
+            data = {
+                'function': function,
+                'args': args
+            }
+            ClientSocket.sendall(json.dumps(data).encode())
+            result = ClientSocket.recv(1024).decode()
+            print('function: {}, args: {}, result: {}'.format(function, args, result))
+        except timeout as e:
+            print("Connection timeout")
+            ClientSocket.close()
+        
     
     def list_functions(self):
         ClientSocket = socket(AF_INET, SOCK_STREAM)
@@ -46,7 +54,8 @@ class RPCClient:
         }
         ClientSocket.send(json.dumps(data).encode())
         result = ClientSocket.recv(1024)
-        return json.loads(result.decode())
+        result = json.loads(result.decode())
+        print(result)
     
 if __name__ == "__main__":
     args = parse_args()
@@ -54,10 +63,17 @@ if __name__ == "__main__":
     port = args.port
     client = RPCClient(host, port)
 
-    print("hello, here is the RPC client")
-    print("Connected to server at {}:{}".format(host, port))
-    print("Here are the available functions:")
-    print(client.list_functions())
+    # while True:
+    #     print("hello, here is the RPC client")
+    #     print("Connected to server at {}:{}".format(host, port))
+    #     print("Here are the available functions:")
+    #     print(client.list_functions())
+    #     print("Please input the function you want to call:")
+    #     function = input()
+    #     print("Please input the arguments:")
+    #     args = input().split()
+    #     print(client.call(function, args))
+    client.call('add', 1, 2)
         
     
 
