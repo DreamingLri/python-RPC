@@ -40,7 +40,10 @@ class RPCClient:
             }
             ClientSocket.sendall(json.dumps(data).encode())
             result = ClientSocket.recv(1024).decode()
-            print('function: {}, args: {}, result: {}'.format(function, args, result))
+            if result == 'Function not found':
+                print('Function {} not found'.format(function))
+            else:    
+                print('function: {}, args: {}, result: {}'.format(function, args, result))
         except timeout as e:
             print("Connection timeout")
             ClientSocket.close()
@@ -55,7 +58,7 @@ class RPCClient:
         ClientSocket.send(json.dumps(data).encode())
         result = ClientSocket.recv(1024)
         result = json.loads(result.decode())
-        print(result)
+        print('Available functions: {}'.format(result))
     
 if __name__ == "__main__":
     args = parse_args()
@@ -73,7 +76,9 @@ if __name__ == "__main__":
     #     print("Please input the arguments:")
     #     args = input().split()
     #     print(client.call(function, args))
+    client.list_functions()
     client.call('add', 1, 2)
+    client.call('sub', 3, 2)
         
     
 
