@@ -98,6 +98,8 @@ class RPCServer:
             ServerSocket = socket(AF_INET, SOCK_STREAM)
         else:
             ServerSocket = socket(AF_INET6, SOCK_STREAM)
+        
+        ServerSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         ServerSocket.bind((ip, port))
         ServerSocket.listen(1024)
         # ServerSocket.setblocking(False)

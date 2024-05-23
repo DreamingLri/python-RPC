@@ -1,12 +1,13 @@
 import socket
 from socket import *
 import json
-import signal
+import time
+
 
 class RegisterCenter:
     def __init__(self):
         self.function_list = []
-        self.server_list = []
+        self.server_list = {}
 
     def run_register(self, ip, port):
         print('Starting registrar...')
@@ -18,9 +19,6 @@ class RegisterCenter:
         while True:
             connection, address = RegisterSocket.accept()
             self.function_service(connection)
-            # print(f'Connection from {address}')
-            # connection.close()
-            # print(f'Connection closed')
                 
 
     def list_functions(self):
@@ -58,8 +56,8 @@ class RegisterCenter:
 
         elif data['function'] == 'heartbeat':
             connection.send(b'Receive heartbeat from registrar')
-            if self.server_list.count(data['name']) == 0:
-                self.server_list.append(data['name'])
+            if data['name'] not in self.server_list:
+                self.server_list[data['name']] = 0
                 print(f'Server {data["name"]} is online')
 
         elif data['function'] == 'list_online_servers':
@@ -68,8 +66,7 @@ class RegisterCenter:
         else:
             connection.send(b'Function not found')
 
-                
-        
+            
 
 if __name__ == '__main__':
     register = RegisterCenter()
