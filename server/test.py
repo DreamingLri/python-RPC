@@ -1,3 +1,4 @@
+import ipaddress
 import socket
 import json
 import argparse
@@ -93,7 +94,10 @@ class RPCServer:
         t = RepeatingTimer(5, server.heartbeat)
         t.start()
 
-        ServerSocket = socket(AF_INET, SOCK_STREAM)
+        if ipaddress.ip_address(ip).version == 4:
+            ServerSocket = socket(AF_INET, SOCK_STREAM)
+        else:
+            ServerSocket = socket(AF_INET6, SOCK_STREAM)
         ServerSocket.bind((ip, port))
         ServerSocket.listen(1024)
         # ServerSocket.setblocking(False)
