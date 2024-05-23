@@ -59,6 +59,20 @@ class RPCClient:
         result = ClientSocket.recv(1024)
         result = json.loads(result.decode())
         print('Available functions: {}'.format(result))
+        ClientSocket.close()
+
+    def list_online_servers(self):
+        ClientSocket = socket(AF_INET, SOCK_STREAM)
+        ClientSocket.connect(('127.0.0.1', 8080))
+        data = {
+            'function': 'list_online_servers'
+        }
+        ClientSocket.send(json.dumps(data).encode())
+        result = ClientSocket.recv(1024)
+        result = json.loads(result.decode())
+        print('Online servers: {}'.format(result))
+        ClientSocket.close()
+
     
 if __name__ == "__main__":
     args = parse_args()
@@ -77,6 +91,7 @@ if __name__ == "__main__":
     #     args = input().split()
     #     print(client.call(function, args))
     client.list_functions()
+    client.list_online_servers()
     client.call('add', 1, 2)
     client.call('sub', 3, 2)
         
