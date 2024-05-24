@@ -7,7 +7,8 @@ import time
 class RegisterCenter:
     def __init__(self):
         self.function_list = []
-        self.server_list = {}
+        self.server_list = []
+        self.counter = 0
 
     def run_register(self, ip, port):
         print('Starting registrar...')
@@ -42,29 +43,38 @@ class RegisterCenter:
         if data['function'] == 'register':
             if data['name'] not in self.function_list:
                 self.register_function(data['name'])
-                connection.send(b'Registered')
+                connection.sendall(b'Registered')
                 print(f'Function {data["name"]} registered')
             else:
-                connection.send(b'Function already exists')
+                connection.sendall(b'Function already exists')
 
         elif data['function'] == 'list':
-            connection.send(json.dumps(self.list_functions()).encode())
+            connection.sendall(json.dumps(self.list_functions()).encode())
 
         elif data['function'] == 'delete':
             self.delete_function(data['name'])
-            connection.send(b'Deleted')
+            connection.sendall(b'Deleted')
 
         elif data['function'] == 'heartbeat':
             connection.send(b'Receive heartbeat from registrar')
-            if data['name'] not in self.server_list:
-                self.server_list[data['name']] = 0
+            if (data['name'], data['ip'], data['port']) not in self.server_list:
+                self.server_list.append((data['name'], data['ip'], data['port']))
                 print(f'Server {data["name"]} is online')
 
         elif data['function'] == 'list_online_servers':
-            connection.send(json.dumps(self.server_list).encode())
+            connection.sendall(json.dumps(self.server_list).encode())
+
+        elif data['function'] == 'join_server':
+            if len(self.server_list) == 0:
+                connection.sendall(json.dumps('No server to connect').encode())
+            else:
+                # 轮询算法
+                server = self.server_list[self.counter]
+                self.counter = (self.counter + 1) % len(self.server_list)
+                connection.sendall(json.dumps(server).encode())             
 
         else:
-            connection.send(b'Function not found')
+            connection.sendall(b'Function not found')
 
             
 

@@ -66,9 +66,11 @@ def parse_args():
     return parser.parse_args()
 
 class RPCServer:
-    def __init__(self):
+    def __init__(self, ip, port):
         self.function_list = {}
         self.name = 'RPC Server'
+        self.ip = ip
+        self.port = port
 
     def register_function(self, name, func):
         self.function_list[name] = func
@@ -88,22 +90,22 @@ class RPCServer:
         print(result)
         registerSocket.close()
     
-    def run_server(self, ip, port):
+    def run_server(self):
         print('Starting server...')
         
         t = RepeatingTimer(5, server.heartbeat)
         t.start()
 
-        if ipaddress.ip_address(ip).version == 4:
+        if ipaddress.ip_address(self.ip).version == 4:
             ServerSocket = socket(AF_INET, SOCK_STREAM)
         else:
             ServerSocket = socket(AF_INET6, SOCK_STREAM)
         
         ServerSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        ServerSocket.bind((ip, port))
+        ServerSocket.bind((self.ip, self.port))
         ServerSocket.listen(1024)
         # ServerSocket.setblocking(False)
-        print(f'Server started on {ip}:{port}')
+        print(f'Server started on {self.ip}:{self.port}')
 
         while True:
             try:
@@ -154,7 +156,9 @@ class RPCServer:
         heartbeatSocket.settimeout(5)
         data = {
             'function': 'heartbeat',
-            'name': self.name
+            'name': self.name,
+            'ip': self.ip,
+            'port': self.port
         }
         try:
             heartbeatSocket.sendall(json.dumps(data).encode())
@@ -177,7 +181,7 @@ if __name__ == '__main__':
     port = args.listen_port
 
 
-    server = RPCServer()
+    server = RPCServer(ip, port)
     server.register_function('add', add)
     server.register_function('sub', sub)
     server.register_function('mul', mul)
@@ -189,5 +193,5 @@ if __name__ == '__main__':
     server.register_function('sqrt', sqrt)
     server.register_function('is_odd', is_odd)
     server.register_function('is_even', is_even)
-    server.run_server(ip, port)
+    server.run_server()
     

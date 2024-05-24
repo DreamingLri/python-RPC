@@ -6,34 +6,40 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='RPC Client Starter')
     parser.add_argument(
-        '-i', '--ip',
+        '-i', '--reg_ip',
         type=str,
-        help='Server IP',
-        required=True,
+        help='Registrar Server IP',
+        required= True,
         default='127.0.0.1'
         )
     
     parser.add_argument(
-        '-p', '--port',
+        '-p', '--reg_port',
         type=int,
-        help='Server Port',
-        required=True
+        help='Registrar Server Port',
+        required= True,
+        default= 8080
         )
     
     return parser.parse_args()
 
 class RPCClient:
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
+    def __init__(self, ip, port):
+        self.reg_ip = ip
+        self.reg_port = port
+        self.ip = None
+        self.port = None
 
     def call(self, function, *args):
         try:
+            if self.ip == None or self.port == None:
+                print('You are not connect any server, please use func join_server() first!')
+                return
             ClientSocket = socket(AF_INET, SOCK_STREAM)
-            ClientSocket.connect((self.host, self.port))
+            ClientSocket.connect((self.ip, self.port))
             ClientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
             ClientSocket.settimeout(5)
-            print("Connected to server at {}:{}".format(self.host, self.port))
+            print("Connected to server at {}:{}".format(self.ip, self.port))
             data = {
                 'function': function,
                 'args': args
@@ -51,7 +57,7 @@ class RPCClient:
     
     def list_functions(self):
         ClientSocket = socket(AF_INET, SOCK_STREAM)
-        ClientSocket.connect(('127.0.0.1', 8080))
+        ClientSocket.connect((self.reg_ip, self.reg_port))
         data = {
             'function': 'list'
         }
@@ -63,7 +69,7 @@ class RPCClient:
 
     def list_online_servers(self):
         ClientSocket = socket(AF_INET, SOCK_STREAM)
-        ClientSocket.connect(('127.0.0.1', 8080))
+        ClientSocket.connect((self.reg_ip, self.reg_port))
         data = {
             'function': 'list_online_servers'
         }
@@ -73,12 +79,30 @@ class RPCClient:
         print('Online servers: {}'.format(result))
         ClientSocket.close()
 
+    def join_server(self):
+        ClientSocket = socket(AF_INET, SOCK_STREAM)
+        ClientSocket.connect((self.reg_ip, self.reg_port))
+        data = {
+            'function': 'join_server'
+        }
+        ClientSocket.send(json.dumps(data).encode())
+        result = ClientSocket.recv(1024).decode()
+        result = json.loads(result)
+        if result == 'No server to connect':
+            print('There are no servers to connect!')
+            return
+        
+        self.ip = result[1]
+        self.port = result[2]
+
+
+
     
 if __name__ == "__main__":
     args = parse_args()
-    host = args.ip
-    port = args.port
-    client = RPCClient(host, port)
+    reg_ip = args.reg_ip
+    reg_port = args.reg_port
+    client = RPCClient(reg_ip, reg_port)
 
     # while True:
     #     print("hello, here is the RPC client")
@@ -92,6 +116,7 @@ if __name__ == "__main__":
     #     print(client.call(function, args))
     client.list_functions()
     client.list_online_servers()
+    client.join_server()
     client.call('add', 1, 2)
     client.call('sub', 3, 2)
         
