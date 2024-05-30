@@ -43,17 +43,22 @@ class RPCClient:
         self.port = None
 
     def call(self, function, *args):
-        if self.ip == None or self.port == None:
-            print('You are not connect to any server, please use func join_server() first!')
+        try:
+            if self.ip == None or self.port == None:
+                print('You are not connect to any server, please use func join_server() first!')
+                return
+            
+            if ipaddress.ip_address(self.ip).version == 6:
+                ip_address = ipaddress.IPv6Address(self.ip).compressed
+                ClientSocket = socket(AF_INET6, SOCK_STREAM)
+                ClientSocket.connect((ip_address, self.port))
+            else:
+                ClientSocket = socket(AF_INET, SOCK_STREAM)
+                ClientSocket.connect((self.ip, self.port))
+        except ConnectionError as e:
+            print('Cannot connect to server {}:{}'.format(self.ip, self.port))
+            ClientSocket.close()
             return
-        
-        if ipaddress.ip_address(self.ip).version == 6:
-            ip_address = ipaddress.IPv6Address(self.ip).compressed
-            ClientSocket = socket(AF_INET6, SOCK_STREAM)
-            ClientSocket.connect((ip_address, self.port))
-        else:
-            ClientSocket = socket(AF_INET, SOCK_STREAM)
-            ClientSocket.connect((self.ip, self.port))
 
         ClientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         ClientSocket.settimeout(5)
