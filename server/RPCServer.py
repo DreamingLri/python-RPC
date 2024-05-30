@@ -64,6 +64,13 @@ def parse_args():
         required=True
         )
     
+    parser.add_argument(
+        '-n', '--name',
+        type=str,
+        help='Server Name',
+        default='RPC Server',
+        required=False
+        )
     return parser.parse_args()
 
 # 解决粘包问题
@@ -78,9 +85,9 @@ def parse_message(data):
     return json.loads(data[4:4 + message_length].decode())
 
 class RPCServer:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, name):
         self.function_list = {}
-        self.name = 'RPC Server'
+        self.name = name
         self.ip = ip
         self.port = port
 
@@ -109,8 +116,9 @@ class RPCServer:
     def run_server(self):
         print('Starting server...')
         
-        t = RepeatingTimer(5, server.heartbeat)
-        t.start()
+        # t = RepeatingTimer(5, server.heartbeat)
+        # t.start()
+        self.heartbeat()
 
         if ipaddress.ip_address(self.ip).version == 4:
             ServerSocket = socket(AF_INET, SOCK_STREAM)
@@ -164,17 +172,27 @@ class RPCServer:
             connection.close()
         
         data = parse_message(data)
-        # print(data)
-
-        func_name = data['function']
-        args = data['args']
+        print(data)
+        try:
+            func_name = data['function']
+            args = data['args']
+        except KeyError:
+            print('Invalid request')
+            connection.close()
+        
         if self.function_list.get(func_name) is None:
             data = {
                 'result': 'Function not found'
             }
-            connection.sendall(format_message(data))
-            connection.close()
-            print(f'Connection closed')
+            try:
+                connection.sendall(format_message(data))
+                connection.close()
+            except timeout:
+                print('Send message timeout')
+                connection.close()
+            except Exception as e:
+                print('Send message error {}'.format(str(e)))
+                connection.close()
         else:
             try:
                 result = self.function_list[func_name](*args)
@@ -184,9 +202,15 @@ class RPCServer:
             data = {
                 'result': result
             }
-            connection.sendall(format_message(data))
-            connection.close()
-            print(f'Connection closed')
+            try:
+                connection.sendall(format_message(data))
+                connection.close()
+            except timeout:
+                print('Send message timeout')
+                connection.close()
+            except Exception as e:
+                print('Send message error {}'.format(str(e)))
+                connection.close()
 
     def heartbeat(self):
         ip = '127.0.0.1'
@@ -225,9 +249,10 @@ if __name__ == '__main__':
     args = parse_args()
     ip = args.listen_ip
     port = args.listen_port
+    name = args.name
 
 
-    server = RPCServer(ip, port)
+    server = RPCServer(ip, port, name)
     server.register_function('add', add)
     server.register_function('sub', sub)
     server.register_function('mul', mul)
