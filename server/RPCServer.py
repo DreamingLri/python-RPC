@@ -119,7 +119,7 @@ class RPCServer:
         
         # t = RepeatingTimer(5, server.heartbeat)
         # t.start()
-        self.heartbeat()
+        self.set_online()
 
         if ipaddress.ip_address(self.ip).version == 4:
             ServerSocket = socket(AF_INET, SOCK_STREAM)
@@ -173,13 +173,28 @@ class RPCServer:
             connection.close()
         
         data = parse_message(data)
-        print(data)
+
+        if data is None:
+            print('Cannot parse message')
+            connection.close()
+            return
+        
+        if data['function'] == 'heartbeat':
+            result = {
+                'function': 'heartbeat',
+                'result': 'OK'
+            }
+            connection.sendall(format_message(result))
+            connection.close()
+            return
+        # print(data)
         try:
             func_name = data['function']
             args = data['args']
         except KeyError:
             print('Invalid request')
             connection.close()
+            return
         
         if self.function_list.get(func_name) is None:
             data = {
@@ -213,31 +228,29 @@ class RPCServer:
                 print('Send message error {}'.format(str(e)))
                 connection.close()
 
-    def heartbeat(self):
+    def set_online(self):
         ip = '127.0.0.1'
         port = 8080
-        heartbeatSocket = socket(AF_INET, SOCK_STREAM)
-        try:
-            heartbeatSocket.connect((ip, port))
-        except ConnectionError as e:
-            print('Cannot connect to registrar')
-            heartbeatSocket.close()
-            return ConnectionError
-        heartbeatSocket.settimeout(5)
+        onlineSocket = socket(AF_INET, SOCK_STREAM)
+        onlineSocket.connect((ip, port))
+        onlineSocket.settimeout(5)
         data = {
-            'function': 'heartbeat',
+            'function': 'online',
             'name': self.name,
             'ip': self.ip,
             'port': self.port
         }
         try:
-            heartbeatSocket.sendall(format_message(data))
-            result = heartbeatSocket.recv(1024)
+            onlineSocket.sendall(format_message(data))
+            result = onlineSocket.recv(1024)
             result = parse_message(result)
             print(result)
         except timeout:
-            print('Heartbeat timeout')
-            heartbeatSocket.close()
+            print('Connect registrar timeout')
+            onlineSocket.close()
+        except ConnectionError as e:
+            print('Cannot registrar error {}'.format(str(e)))
+            onlineSocket.close()
 
 # class RepeatingTimer(Timer):
 #     def run(self):

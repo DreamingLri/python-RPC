@@ -1,6 +1,7 @@
 import socket
 from socket import *
 import json
+import threading
 import time
 
 # 解决粘包问题
@@ -30,6 +31,30 @@ class RegisterCenter:
         while True:
             connection, address = RegisterSocket.accept()
             self.function_service(connection)
+
+    def heartbeat(self, server):
+        while True:
+            time.sleep(5)
+            if server not in self.server_list:
+                break
+            try:
+                heartbeatSocket = socket(AF_INET, SOCK_STREAM)
+                heartbeatSocket.connect((server[1], server[2]))
+                data = {
+                    'function': 'heartbeat'
+                }
+                heartbeatSocket.sendall(format_message(data))
+                result = heartbeatSocket.recv(1024)
+                result = parse_message(result)
+                if result is None:
+                    print('Cannot parse message')
+                    heartbeatSocket.close()
+                # print(result)
+                heartbeatSocket.close()
+            except ConnectionError as e:
+                print(f'Server {server[0]} is offline')
+                self.server_list.remove(server)
+                break
                 
 
     def list_functions(self):
@@ -78,11 +103,13 @@ class RegisterCenter:
             }
             connection.sendall(format_message(data))
 
-        elif data['function'] == 'heartbeat':
+        elif data['function'] == 'online':
             connection.sendall(format_message('Receive heartbeat from registrar'))
             if (data['name'], data['ip'], data['port']) not in self.server_list:
                 self.server_list.append((data['name'], data['ip'], data['port']))
                 print(f'Server {data["name"]} is online')
+                thread = threading.Thread(target=self.heartbeat, args=((data['name'], data['ip'], data['port']),))
+                thread.start()
 
         elif data['function'] == 'list_online_servers':
             data = format_message(self.server_list)

@@ -187,6 +187,7 @@ if __name__ == "__main__":
     client.join_server()
     client.call('add', 1, 2)
     client.call('sub', 3, 2)
+    client.call('mull', 3, 2)
         
     
 
