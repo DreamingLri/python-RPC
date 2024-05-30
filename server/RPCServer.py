@@ -78,6 +78,7 @@ def format_message(data):
     data = json.dumps(data).encode()
     return len(data).to_bytes(4, byteorder='big') + data
 
+
 def parse_message(data):
     message_length = int.from_bytes(data[:4], byteorder='big')
     if len(data) < 4 + message_length:
@@ -238,11 +239,11 @@ class RPCServer:
             print('Heartbeat timeout')
             heartbeatSocket.close()
 
-class RepeatingTimer(Timer):
-    def run(self):
-        while not self.finished.is_set():
-            self.function(*self.args, **self.kwargs)
-            self.finished.wait(self.interval)
+# class RepeatingTimer(Timer):
+#     def run(self):
+#         while not self.finished.is_set():
+#             self.function(*self.args, **self.kwargs)
+#             self.finished.wait(self.interval)
 
 
 if __name__ == '__main__':
