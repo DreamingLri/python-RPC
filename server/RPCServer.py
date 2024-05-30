@@ -45,7 +45,6 @@ def is_odd(a):
 
 def is_even(a):
     return a % 2 == 0
-    
 
 def parse_args():
     parser = argparse.ArgumentParser(description='RPC Client Starter')
@@ -117,8 +116,6 @@ class RPCServer:
     def run_server(self):
         print('Starting server...')
         
-        # t = RepeatingTimer(5, server.heartbeat)
-        # t.start()
         self.set_online()
 
         if ipaddress.ip_address(self.ip).version == 4:
@@ -251,12 +248,6 @@ class RPCServer:
         except ConnectionError as e:
             print('Cannot registrar error {}'.format(str(e)))
             onlineSocket.close()
-
-# class RepeatingTimer(Timer):
-#     def run(self):
-#         while not self.finished.is_set():
-#             self.function(*self.args, **self.kwargs)
-#             self.finished.wait(self.interval)
 
 
 if __name__ == '__main__':
