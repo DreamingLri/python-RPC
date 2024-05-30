@@ -120,6 +120,8 @@ class RegisterCenter:
                 connection.sendall(format_message('No server to connect'))
             else:
                 # 轮询算法
+                if self.counter >= len(self.server_list):
+                    self.counter = 0
                 server = self.server_list[self.counter]
                 self.counter = (self.counter + 1) % len(self.server_list)
                 connection.sendall(format_message(server))             
