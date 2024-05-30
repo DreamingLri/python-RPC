@@ -1,4 +1,5 @@
 import ipaddress
+import select
 import socket
 import json
 import argparse
@@ -99,19 +100,42 @@ class RPCServer:
         if ipaddress.ip_address(self.ip).version == 4:
             ServerSocket = socket(AF_INET, SOCK_STREAM)
         else:
+            self.ip = '[{}]'.format(self.ip)
             ServerSocket = socket(AF_INET6, SOCK_STREAM)
         
         ServerSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         ServerSocket.bind((self.ip, self.port))
         ServerSocket.listen(1024)
         # ServerSocket.setblocking(False)
-        print(f'Server started on {self.ip}:{self.port}')
+        
 
+        epoll = select.epoll()
+        epoll.register(ServerSocket.fileno(), select.EPOLLIN)
+        
+        socket_list = {}
+        client_address_list = {}
+        print(f'Server started on {self.ip}:{self.port}')
         while True:
             try:
-                connection, address = ServerSocket.accept()
-                print(f'Connection from {address}')
-                self.handle_rpc(connection)
+                epoll_list = epoll.poll()
+                for sock_fileno, events in epoll_list:
+                    if sock_fileno == ServerSocket.fileno():
+                        connection, address = ServerSocket.accept()
+                        connection.setblocking(False)
+                        print(f'Connection from {address}')
+                        epoll.register(connection.fileno(), select.EPOLLIN)
+                        socket_list[connection.fileno()] = connection
+                        client_address_list[connection.fileno()] = address
+                    
+                    elif events & select.EPOLLIN:
+                        connection = socket_list[sock_fileno]
+                        self.handle_rpc(connection)
+                    
+                    elif events & select.EPOLLHUP:
+                        epoll.unregister(sock_fileno)
+                        socket_list[sock_fileno].close()
+                        del socket_list[sock_fileno]
+                        del client_address_list[sock_fileno]
             except BlockingIOError:
                 pass
         
