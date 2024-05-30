@@ -3,6 +3,16 @@ from socket import *
 import json
 import time
 
+# 解决粘包问题
+def format_message(data):
+    data = json.dumps(data).encode()
+    return len(data).to_bytes(4, byteorder='big') + data
+
+def parse_message(data):
+    message_length = int.from_bytes(data[:4], byteorder='big')
+    if len(data) < 4 + message_length:
+        return None
+    return json.loads(data[4:4 + message_length].decode())
 
 class RegisterCenter:
     def __init__(self):
@@ -34,47 +44,61 @@ class RegisterCenter:
     def function_service(self, connection):
         connection.settimeout(5)
         try:
-            data = connection.recv(1024).decode()
+            data = connection.recv(1024)
         except timeout:
             print('Connection timeout')
             connection.close()
         
-        data = json.loads(data)
+        data = parse_message(data)
         if data['function'] == 'register':
             if data['name'] not in self.function_list:
                 self.register_function(data['name'])
-                connection.sendall(b'Registered')
+                data = {
+                    'message': 'Registered',
+                    'name': data['name']
+                }
+                connection.sendall(format_message(data))
                 print(f'Function {data["name"]} registered')
             else:
-                connection.sendall(b'Function already exists')
+                data = {
+                    'message': 'Function already exists',
+                    'name': data['name']
+                }
+                connection.sendall(format_message(data))
 
         elif data['function'] == 'list':
-            connection.sendall(json.dumps(self.list_functions()).encode())
+            data = format_message(self.list_functions())
+            connection.sendall(data)
 
         elif data['function'] == 'delete':
             self.delete_function(data['name'])
-            connection.sendall(b'Deleted')
+            data = {
+                'message': 'Deleted',
+                'name': data['name']
+            }
+            connection.sendall(format_message(data))
 
         elif data['function'] == 'heartbeat':
-            connection.send(b'Receive heartbeat from registrar')
+            connection.sendall(format_message('Receive heartbeat from registrar'))
             if (data['name'], data['ip'], data['port']) not in self.server_list:
                 self.server_list.append((data['name'], data['ip'], data['port']))
                 print(f'Server {data["name"]} is online')
 
         elif data['function'] == 'list_online_servers':
-            connection.sendall(json.dumps(self.server_list).encode())
+            data = format_message(self.server_list)
+            connection.sendall(data)
 
         elif data['function'] == 'join_server':
             if len(self.server_list) == 0:
-                connection.sendall(json.dumps('No server to connect').encode())
+                connection.sendall(format_message('No server to connect'))
             else:
                 # 轮询算法
                 server = self.server_list[self.counter]
                 self.counter = (self.counter + 1) % len(self.server_list)
-                connection.sendall(json.dumps(server).encode())             
+                connection.sendall(format_message(server))             
 
         else:
-            connection.sendall(b'Function not found')
+            connection.sendall(format_message('Function not found'))
 
             
 

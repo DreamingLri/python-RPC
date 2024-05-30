@@ -66,6 +66,17 @@ def parse_args():
     
     return parser.parse_args()
 
+# 解决粘包问题
+def format_message(data):
+    data = json.dumps(data).encode()
+    return len(data).to_bytes(4, byteorder='big') + data
+
+def parse_message(data):
+    message_length = int.from_bytes(data[:4], byteorder='big')
+    if len(data) < 4 + message_length:
+        return None
+    return json.loads(data[4:4 + message_length].decode())
+
 class RPCServer:
     def __init__(self, ip, port):
         self.function_list = {}
@@ -86,9 +97,13 @@ class RPCServer:
             'function': 'register',
             'name': name
         }
-        registerSocket.sendall(json.dumps(data).encode())
-        result = registerSocket.recv(1024).decode()
-        print(result)
+        registerSocket.sendall(format_message(data))
+        result = registerSocket.recv(1024)
+        result = parse_message(result)
+        if result is None:
+            print('Cannot parse message')
+            registerSocket.close()
+        print(result['name'] + ' ' + result['message'])
         registerSocket.close()
     
     def run_server(self):
@@ -148,13 +163,16 @@ class RPCServer:
             print('Request timeout')
             connection.close()
         
-        data = json.loads(data.decode())
+        data = parse_message(data)
         # print(data)
 
         func_name = data['function']
         args = data['args']
         if self.function_list.get(func_name) is None:
-            connection.sendall('Function not found'.encode())
+            data = {
+                'result': 'Function not found'
+            }
+            connection.sendall(format_message(data))
             connection.close()
             print(f'Connection closed')
         else:
@@ -163,7 +181,10 @@ class RPCServer:
             except Exception as e:
                 result = f'Error: {str(e)}'
             
-            connection.sendall(str(result).encode())
+            data = {
+                'result': result
+            }
+            connection.sendall(format_message(data))
             connection.close()
             print(f'Connection closed')
 
@@ -185,8 +206,9 @@ class RPCServer:
             'port': self.port
         }
         try:
-            heartbeatSocket.sendall(json.dumps(data).encode())
-            result = heartbeatSocket.recv(1024).decode()
+            heartbeatSocket.sendall(format_message(data))
+            result = heartbeatSocket.recv(1024)
+            result = parse_message(result)
             print(result)
         except timeout:
             print('Heartbeat timeout')
