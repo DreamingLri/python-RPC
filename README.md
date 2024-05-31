@@ -17,7 +17,9 @@
 代码内容
 
 client/ -> RPC客户端及其建议的控制台UI
+
 server/ -> PRC服务端
+
 registrar/ -> 服务注册中心
 
 ---
@@ -25,7 +27,9 @@ registrar/ -> 服务注册中心
 启动命令
 
 客户端：`python3 RPCClient.py -i 127.0.0.1 -p 8080`
+
 服务端：`python3 RPCServer.py -l 127.0.0.1 -p 8081`
+
 服务注册中心：`python3 registrar`
 
 ---
