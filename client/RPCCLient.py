@@ -117,6 +117,7 @@ class RPCClient:
             result = ClientSocket.recv(1024)
             result = parse_message(result)
             print('Available functions: {}'.format(result))
+            return result
         except timeout:
             print("Connection timeout")
             ClientSocket.close()
@@ -175,6 +176,7 @@ class RPCClient:
             
             self.ip = result[1]
             self.port = result[2]
+            print('Connected to server at {}:{}'.format(self.ip, self.port))
         except timeout:
             print("Connection timeout")
             ClientSocket.close()
