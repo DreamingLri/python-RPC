@@ -26,7 +26,7 @@ registrar/ -> 服务注册中心
 
 启动命令
 
-客户端：`python3 RPCClient.py -i 127.0.0.1 -p 8080`
+客户端：`python3 RPCClient.py -i 127.0.0.1 -p 8080` 或 `python3 clientTUI.py`
 
 服务端：`python3 RPCServer.py -l 127.0.0.1 -p 8081`
 
