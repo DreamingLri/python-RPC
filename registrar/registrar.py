@@ -3,6 +3,27 @@ from socket import *
 import json
 import threading
 import time
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='RPC registrar Server Starter')
+    parser.add_argument(
+        '-i', '--ip',
+        type=str,
+        help='Registrar Server IP',
+        required= False,
+        default='127.0.0.1'
+        )
+    
+    parser.add_argument(
+        '-p', '--port',
+        type=int,
+        help='Registrar Server Port',
+        required= False,
+        default= 8080
+        )
+    
+    return parser.parse_args()
 
 # 解决粘包问题
 def format_message(data):
@@ -132,5 +153,8 @@ class RegisterCenter:
             
 
 if __name__ == '__main__':
+    args = parse_args()
+    ip = args.ip
+    port = args.port
     register = RegisterCenter()
-    register.run_register('127.0.0.1', 8080)
+    register.run_register(ip, port)
