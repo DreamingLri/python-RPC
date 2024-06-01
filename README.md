@@ -16,11 +16,21 @@
 
 代码内容
 
-client/ -> RPC客户端及其建议的控制台UI
+```
+project
+│   README.md 
+│
+└───client
+│   │   RPCClient.py -> RPC客户端程序
+│   │   clientTUI.py -> 客户端控制台UI
+│   
+└───server
+│   │   RPCServer.py -> RPC服务端
+│
+└───registrar
+    │   registrar.py -> 服务注册中心
 
-server/ -> PRC服务端
-
-registrar/ -> 服务注册中心
+```
 
 ---
 
