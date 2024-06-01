@@ -54,24 +54,28 @@ class RegisterCenter:
             self.function_service(connection)
 
     def heartbeat(self, server):
+        # 每隔5秒进行一次心跳检测
         while True:
             time.sleep(5)
+            # 如果服务器不在服务器列表中，则退出
             if server not in self.server_list:
                 break
             try:
+                # 向服务器发送心跳包
                 heartbeatSocket = socket(AF_INET, SOCK_STREAM)
                 heartbeatSocket.connect((server[1], server[2]))
                 data = {
                     'function': 'heartbeat'
                 }
                 heartbeatSocket.sendall(format_message(data))
+                # 接收服务器返回的心跳包
                 result = heartbeatSocket.recv(1024)
                 result = parse_message(result)
                 if result is None:
                     print('Cannot parse message')
                     heartbeatSocket.close()
-                # print(result)
                 heartbeatSocket.close()
+            # 如果服务器连接失败，则输出服务器下线信息，并将服务器从服务器列表中删除
             except ConnectionError as e:
                 print(f'Server {server[0]} is offline')
                 self.server_list.remove(server)
@@ -96,7 +100,9 @@ class RegisterCenter:
             connection.close()
         
         data = parse_message(data)
+        # 对函数进行判断，如果函数不存在则注册，否则返回函数已存在
         if data['function'] == 'register':
+            # 未出现过的函数则注册
             if data['name'] not in self.function_list:
                 self.register_function(data['name'])
                 data = {
@@ -105,6 +111,7 @@ class RegisterCenter:
                 }
                 connection.sendall(format_message(data))
                 print(f'Function {data["name"]} registered')
+            # 已存在的函数则返回函数已存在
             else:
                 data = {
                     'message': 'Function already exists',
@@ -113,6 +120,7 @@ class RegisterCenter:
                 connection.sendall(format_message(data))
 
         elif data['function'] == 'list':
+            # 进行消息序列化
             data = format_message(self.list_functions())
             connection.sendall(data)
 
@@ -125,12 +133,20 @@ class RegisterCenter:
             connection.sendall(format_message(data))
 
         elif data['function'] == 'online':
-            connection.sendall(format_message('Receive heartbeat from registrar'))
+            # 未出现过的服务器则注册
             if (data['name'], data['ip'], data['port']) not in self.server_list:
+                # 将服务器信息加入服务器列表
                 self.server_list.append((data['name'], data['ip'], data['port']))
+                # 输出服务器上线信息
                 print(f'Server {data["name"]} is online')
+                # 返回服务器已在线
+                connection.sendall(format_message('Server {} is online'.format(data['name'])))
+                # 创建线程进行心跳检测
                 thread = threading.Thread(target=self.heartbeat, args=((data['name'], data['ip'], data['port']),))
                 thread.start()
+            # 已存在的服务器则返回服务器已在线
+            else:
+                connection.sendall(format_message('Server already online'))
 
         elif data['function'] == 'list_online_servers':
             data = format_message(self.server_list)

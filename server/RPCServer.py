@@ -90,7 +90,9 @@ class RPCServer:
         self.port = port
 
     def register_function(self, name, func):
+        #注册函数
         self.function_list[name] = func
+        #连接注册中心
         registerSocket = socket(AF_INET, SOCK_STREAM)
         try:
             registerSocket.connect(('127.0.0.1', 8080))
@@ -102,12 +104,15 @@ class RPCServer:
             'function': 'register',
             'name': name
         }
+        #发送注册消息
         registerSocket.sendall(format_message(data))
+        #接收注册结果
         result = registerSocket.recv(1024)
         result = parse_message(result)
         if result is None:
             print('Cannot parse message')
             registerSocket.close()
+        #输出注册结果
         print(result['name'] + ' ' + result['message'])
         registerSocket.close()
     
@@ -223,12 +228,14 @@ class RPCServer:
                 print('Send message error {}'.format(str(e)))
                 connection.close()
 
+    # 发送上线消息
     def set_online(self):
         ip = '127.0.0.1'
         port = 8080
         onlineSocket = socket(AF_INET, SOCK_STREAM)
         onlineSocket.connect((ip, port))
         onlineSocket.settimeout(5)
+        # 上线消息内容
         data = {
             'function': 'online',
             'name': self.name,
@@ -236,9 +243,12 @@ class RPCServer:
             'port': self.port
         }
         try:
+            # 发送消息
             onlineSocket.sendall(format_message(data))
+            # 接收回复
             result = onlineSocket.recv(1024)
             result = parse_message(result)
+            # 输出回复
             print(result)
         except timeout:
             print('Connect registrar timeout')

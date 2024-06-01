@@ -26,10 +26,12 @@ def parse_args():
     return parser.parse_args()
 
 # 解决粘包问题
+#消息序列化
 def format_message(data):
     data = json.dumps(data).encode()
     return len(data).to_bytes(4, byteorder='big') + data
 
+#消息反序列化
 def parse_message(data):
     message_length = int.from_bytes(data[:4], byteorder='big')
     if len(data) < 4 + message_length:
@@ -69,7 +71,6 @@ class RPCClient:
             'args': args
         }
         try:
-            # print(data)
             ClientSocket.sendall(format_message(data))
         except Exception as e:
             print('Send message error {}'.format(str(e)))
