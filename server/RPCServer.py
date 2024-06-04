@@ -124,9 +124,9 @@ class RPCServer:
         if ipaddress.ip_address(self.ip).version == 4:
             ServerSocket = socket(AF_INET, SOCK_STREAM)
         else:
-            self.ip = '[{}]'.format(self.ip)
-            ServerSocket = socket(AF_INET6, SOCK_STREAM)
-        
+            self.ip = "[{}]".format(self.ip)
+            ServerSocket = socket(AF_INET6, SOCK_STREAM, 0)
+        print(self.ip)
         ServerSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         ServerSocket.bind((self.ip, self.port))
         ServerSocket.listen(1024)
@@ -170,6 +170,9 @@ class RPCServer:
             data = connection.recv(1024)
         except timeout:
             print('Request timeout')
+            connection.close()
+        except ConnectionError as e:
+            print('Cannot receive message {}'.format(str(e)))
             connection.close()
         
         data = parse_message(data)

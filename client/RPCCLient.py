@@ -58,18 +58,22 @@ class RPCClient:
             else:
                 ClientSocket = socket(AF_INET, SOCK_STREAM)
                 ClientSocket.connect((self.ip, self.port))
+
+
+            ClientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+            ClientSocket.settimeout(5)
+            print("Connected to server at {}:{}".format(self.ip, self.port))
+            data = {
+                'function': function,
+                'args': args
+            }        
         except ConnectionError as e:
             print('Cannot connect to server {}:{}'.format(self.ip, self.port))
             ClientSocket.close()
-            return
+        except timeout as e:
+            print("Connection timeout")
+            ClientSocket.close()
 
-        ClientSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        ClientSocket.settimeout(5)
-        print("Connected to server at {}:{}".format(self.ip, self.port))
-        data = {
-            'function': function,
-            'args': args
-        }
         try:
             ClientSocket.sendall(format_message(data))
         except Exception as e:
@@ -189,24 +193,24 @@ if __name__ == "__main__":
     args = parse_args()
     reg_ip = args.reg_ip
     reg_port = args.reg_port
-    # client = RPCClient(reg_ip, reg_port)
-    # client.list_functions()
-    # client.list_online_servers()
-    # client.join_server()
-    # client.call('add', 1, 2)
-    # client.call('sub', 3, 2)
-    # client.call('mull', 3, 2)
+    client = RPCClient(reg_ip, reg_port)
+    client.list_functions()
+    client.list_online_servers()
+    client.join_server()
+    client.call('add', 1, 2)
+    client.call('sub', 3, 2)
+    client.call('mull', 3, 2)
 
-    threads = []
-    for i in range(10):
-        client = RPCClient(reg_ip, reg_port)
-        client.join_server()
-        t = threading.Thread(target=client.call, args=('add', 1, 2))
-        threads.append(t)
-        t.start()
+    # threads = []
+    # for i in range(10):
+    #     client = RPCClient(reg_ip, reg_port)
+    #     client.join_server()
+    #     t = threading.Thread(target=client.call, args=('add', 1, 2))
+    #     threads.append(t)
+    #     t.start()
 
-    for t in threads:
-        t.join()
+    # for t in threads:
+    #     t.join()
         
     
 
