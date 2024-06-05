@@ -193,24 +193,24 @@ if __name__ == "__main__":
     args = parse_args()
     reg_ip = args.reg_ip
     reg_port = args.reg_port
-    client = RPCClient(reg_ip, reg_port)
-    client.list_functions()
-    client.list_online_servers()
-    client.join_server()
-    client.call('add', 1, 2)
-    client.call('sub', 3, 2)
-    client.call('mull', 3, 2)
+    # client = RPCClient(reg_ip, reg_port)
+    # client.list_functions()
+    # client.list_online_servers()
+    # client.join_server()
+    # client.call('add', 1, 2)
+    # client.call('sub', 3, 2)
+    # client.call('mull', 3, 2)
 
-    # threads = []
-    # for i in range(10):
-    #     client = RPCClient(reg_ip, reg_port)
-    #     client.join_server()
-    #     t = threading.Thread(target=client.call, args=('add', 1, 2))
-    #     threads.append(t)
-    #     t.start()
+    threads = []
+    for i in range(10):
+        client = RPCClient(reg_ip, reg_port)
+        client.join_server()
+        t = threading.Thread(target=client.call, args=('add', 1, 2))
+        threads.append(t)
+        t.start()
 
-    # for t in threads:
-    #     t.join()
+    for t in threads:
+        t.join()
         
     
 

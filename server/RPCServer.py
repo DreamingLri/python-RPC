@@ -51,8 +51,8 @@ def parse_args():
         '-l', '--listen-ip',
         type=str,
         help='Server Listen IP',
-        required=True,
-        default='127.0.0.1'
+        required=False,
+        default='0.0.0.0'
         )
     
     parser.add_argument(
@@ -124,9 +124,8 @@ class RPCServer:
         if ipaddress.ip_address(self.ip).version == 4:
             ServerSocket = socket(AF_INET, SOCK_STREAM)
         else:
-            self.ip = "[{}]".format(self.ip)
+            self.ip = ipaddress.IPv6Address(self.ip).compressed
             ServerSocket = socket(AF_INET6, SOCK_STREAM, 0)
-        print(self.ip)
         ServerSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         ServerSocket.bind((self.ip, self.port))
         ServerSocket.listen(1024)
