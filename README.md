@@ -2,6 +2,8 @@
 计算机网络大作业
 简易RPC服务实现
 
+具体内容可以查看[实验报告](https://github.com/DreamingLri/python-RPC/blob/master/%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A.md)
+
 ---
 
 功能包含
